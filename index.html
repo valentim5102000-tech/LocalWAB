@@ -140,10 +140,24 @@ function localizar(){
             alert("Operação realizada! 10 Kz deduzidos.\nSaldo restante: "+saldoUsuario+" Kz\nTransporte mais próximo: "+maisProximo+"\nTempo estimado: "+tempoMinutos+" min");
 
         }, function(error){
-            alert("Erro ao obter localização: " + error.message);
-        });
+            // --- Tratamento de erros detalhado ---
+            switch(error.code){
+                case error.PERMISSION_DENIED:
+                    alert("Erro: Permissão de GPS negada. Ative a localização nas configurações do app.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Erro: Localização indisponível. Verifique se o GPS está ativo.");
+                    break;
+                case error.TIMEOUT:
+                    alert("Erro: Tempo de busca esgotado. Tente novamente em um local aberto.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("Erro desconhecido ao obter localização.");
+                    break;
+            }
+        }, {timeout:10000}); // tempo máximo de 10 segundos
     } else {
-        alert("GPS não disponível");
+        alert("GPS não disponível neste dispositivo.");
     }
 }
 
@@ -161,7 +175,6 @@ function calcularDistancia(lat1, lon1, lat2, lon2){
 </script>
 
 <!-- --- GOOGLE MAPS API --- -->
-<!-- Chave já inserida aqui -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyChpU8bvzDz6aTuq6TSOFOAbhNxafUu5ao&callback=iniciarMapa" async defer></script>
 
 </body>
