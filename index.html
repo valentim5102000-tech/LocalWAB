@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<title>LocalWAB</title>
+
+<!-- ===== Ícones do Font Awesome ===== -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* ===== Estilo Geral ===== */
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== Cabeçalho ===== */
+header {
+  background: #2196f3;
+  color: white;
+  padding: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* ===== Botões ===== */
+button {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  margin: 10px;
+  font-size: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button i {
+  margin-right: 8px; /* Espaço entre ícone e texto */
+}
+
+button:hover {
+  background: #1976d2;
+  transform: translateY(-2px);
+}
+
+/* ===== Menu ===== */
+.menu {
+  margin-top: 20px;
+}
+
+/* ===== Parágrafos ===== */
+p {
+  font-size: 18px;
+  margin-top: 20px;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  LocalWAB
+</header>
+
+<div class="menu">
+  <button onclick="alert('Home selecionado')"><i class="fas fa-home"></i>Home</button>
+  <button onclick="alert('Serviços selecionado')"><i class="fas fa-cogs"></i>Serviços</button>
+  <button onclick="alert('Contacto selecionado')"><i class="fas fa-address-book"></i>Contacto</button>
+  <a href="https://wa.me/244940045782" target="_blank">
+    <button><i class="fab fa-whatsapp"></i>WhatsApp</button>
+  </a>
+  <a href="mailto:projectvabe05@gmail.com">
+    <button><i class="fas fa-envelope"></i>Email</button>
+  </a>
+  <a href="https://www.google.com/maps/place/Luanda,+Angola" target="_blank">
+    <button><i class="fas fa-map-marker-alt"></i>Localização</button>
+  </a>
+</div>
+
+<p>Aplicativo LocalWAB funcionando.</p>
+
+<button onclick="alert('Aplicativo LocalWAB funcionando')"><i class="fas fa-play"></i>Testar aplicativo</button>
+
+<br>
+
+<a href="https://www.google.com" target="_blank">
+  <button><i class="fas fa-globe"></i>Abrir internet</button>
+</a>
+
+</body>
+</html>
