@@ -1,181 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-AO">
 <head>
-<meta charset="UTF-8">
-<title>LocalWAB</title>
-
-<style>
-body{
-    font-family: Arial;
-    background:#f2f2f2;
-    text-align:center;
-    margin:0;
-    padding:0;
-}
-
-header{
-    background:#2196f3;
-    color:white;
-    padding:20px;
-    font-size:24px;
-}
-
-button{
-    background:#2196f3;
-    color:white;
-    border:none;
-    padding:15px;
-    margin:10px;
-    font-size:16px;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#1976d2;
-}
-
-.menu{
-    margin-top:20px;
-}
-
-#map{
-    width:100%;
-    height:500px;
-    margin-top:10px;
-}
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalWab - Rastreamento Profissional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Roboto',sans-serif; }
+        body, html { height:100%; width:100%; background:#f5f5f5; }
+        header { background:#cc0000; color:white; padding:15px 20px; text-align:center; font-size:1.5rem; font-weight:bold; }
+        #app { display:flex; flex-direction:column; height:calc(100% - 60px); }
+        #map { flex:1; width:100%; }
+        #panel { background:white; padding:15px; box-shadow:0 -3px 10px rgba(0,0,0,0.1); }
+        input { padding:10px; border-radius:8px; border:1px solid #ccc; width:calc(100% - 22px); margin-bottom:10px; }
+        button { background:#cc0000; color:white; border:none; padding:10px 15px; margin-right:10px; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.3s; }
+        button:hover { background:#990000; }
+        #whatsapp { display:flex; justify-content:center; margin-top:10px; }
+        #whatsapp a { background:#25D366; color:white; padding:10px 20px; border-radius:50px; text-decoration:none; font-weight:bold; display:flex; align-items:center; }
+        #whatsapp a i { margin-right:10px; }
+        @media(max-width:768px){ header{font-size:1.3rem;} button{margin-bottom:10px;width:100%;} }
+        #history { max-height:100px; overflow-y:auto; margin-top:10px; background:#fafafa; padding:10px; border-radius:8px; border:1px solid #ddd; }
+    </style>
 </head>
 <body>
+    <header>LocalWab - Rastreamento Profissional</header>
+    <div id="app">
+        <div id="map"></div>
+        <div id="panel">
+            <input type="text" id="userName" placeholder="Seu nome">
+            <input type="number" id="userPhone" placeholder="Número de contato">
+            <button onclick="startTracking()">Iniciar Rastreamento</button>
+            <button onclick="simulatePayment()">Pagar 10 Kz</button>
+            <div id="status" style="margin-top:10px; font-weight:bold;"></div>
+            <div id="history"></div>
+            <div id="whatsapp">
+                <a href="https://wa.me/244940045782" target="_blank"><i class="fab fa-whatsapp"></i>Suporte WhatsApp</a>
+            </div>
+        </div>
+    </div>
 
-<header>LocalWAB</header>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Inicializa o mapa
+        const map = L.map('map').setView([-8.8383, 13.2344], 12); // Luanda
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-<div class="menu">
-<button onclick="localizar()">Ver minha localização</button>
-</div>
+        // Transportes simulados
+        const transports = [
+            {id:1, lat:-8.8383, lng:13.2344, marker:null},
+            {id:2, lat:-8.8430, lng:13.2500, marker:null},
+            {id:3, lat:-8.8200, lng:13.2200, marker:null}
+        ];
+        transports.forEach(t => {
+            t.marker = L.marker([t.lat,t.lng]).addTo(map).bindPopup("Transporte " + t.id);
+        });
 
-<div id="map"></div>
+        // Histórico
+        const historyDiv = document.getElementById('history');
 
-<script>
-// --- Variáveis globais ---
-var map;
-var marcadorUsuario;
-var marker1, marker2;
-var saldoUsuario = 100;
-var precoOperacao = 10;
+        // Função rastrear GPS do usuário
+        function startTracking(){
+            const name = document.getElementById('userName').value;
+            const phone = document.getElementById('userPhone').value;
+            if(!name || !phone){ alert("Preencha seu nome e telefone!"); return; }
+            document.getElementById('status').innerText = "Rastreamento iniciado para " + name;
 
-// posições iniciais dos transportes
-var transporte1 = {lat:-8.8385, lng:13.2345};
-var transporte2 = {lat:-8.8395, lng:13.2360};
-
-// --- Função para iniciar mapa ---
-function iniciarMapa(){
-    map = new google.maps.Map(document.getElementById("map"), {
-        center: {lat:-8.8383, lng:13.2344},
-        zoom:15
-    });
-
-    // Marcadores dos transportes
-    marker1 = new google.maps.Marker({
-        position: transporte1,
-        map: map,
-        title:"Transporte 1"
-    });
-    marker2 = new google.maps.Marker({
-        position: transporte2,
-        map: map,
-        title:"Transporte 2"
-    });
-
-    // Começa a mover os transportes
-    moverTransportes();
-}
-
-// --- Função para mover transportes aleatoriamente ---
-function moverTransportes(){
-    setInterval(function(){
-        transporte1.lat += (Math.random()-0.5)/1000;
-        transporte1.lng += (Math.random()-0.5)/1000;
-        marker1.setPosition(transporte1);
-
-        transporte2.lat += (Math.random()-0.5)/1000;
-        transporte2.lng += (Math.random()-0.5)/1000;
-        marker2.setPosition(transporte2);
-    }, 5000);
-}
-
-// --- Função para localizar usuário e calcular transporte mais próximo ---
-function localizar(){
-    if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(function(position){
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-
-            // marcador do usuário
-            if(marcadorUsuario){
-                marcadorUsuario.setMap(null);
+            // Solicitar localização do usuário
+            if(navigator.geolocation){
+                navigator.geolocation.watchPosition(position => {
+                    const {latitude, longitude} = position.coords;
+                    updateMap(latitude, longitude);
+                }, err => { alert("Não foi possível obter localização."); }, {enableHighAccuracy:true});
+            } else {
+                alert("Seu dispositivo não suporta GPS.");
             }
-            marcadorUsuario = new google.maps.Marker({
-                position: {lat:lat, lng:lon},
-                map: map,
-                title:"Você está aqui"
+
+            simulateMovement();
+        }
+
+        // Atualiza mapa com posição do usuário
+        let userMarker = null;
+        function updateMap(lat, lng){
+            if(!userMarker){
+                userMarker = L.marker([lat,lng], {icon:L.icon({iconUrl:'https://cdn-icons-png.flaticon.com/512/64/64113.png', iconSize:[40,40]})}).addTo(map).bindPopup("Você");
+            } else { userMarker.setLatLng([lat,lng]); }
+            map.setView([lat,lng], 13);
+            addToHistory(lat,lng);
+            notifyArrival(lat,lng);
+        }
+
+        // Adiciona ao histórico
+        function addToHistory(lat,lng){
+            const now = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.innerText = `${now} - Localização: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            historyDiv.prepend(entry);
+        }
+
+        // Simulação de movimento dos transportes
+        function simulateMovement(){
+            setInterval(() => {
+                transports.forEach(t => {
+                    t.lat += (Math.random()-0.5)/5000;
+                    t.lng += (Math.random()-0.5)/5000;
+                    t.marker.setLatLng([t.lat,t.lng]);
+                });
+            },1000);
+        }
+
+        // Pagamento simulado
+        function simulatePayment(){
+            document.getElementById('status').innerText = "Pagamento de 10 Kz confirmado!";
+        }
+
+        // Notificação chegada transporte
+        function notifyArrival(lat,lng){
+            transports.forEach(t => {
+                const dist = Math.sqrt(Math.pow(lat-t.lat,2)+Math.pow(lng-t.lng,2));
+                if(dist<0.001){ 
+                    if(Notification.permission==="granted"){
+                        new Notification("LocalWab", {body:`Transporte ${t.id} está próximo de você!`});
+                    }
+                }
             });
+        }
 
-            map.setCenter({lat:lat, lng:lon});
-
-            // --- Verifica saldo ---
-            if(saldoUsuario < precoOperacao){
-                alert("Saldo insuficiente! Adicione fundos para usar o serviço.");
-                return;
-            }
-            saldoUsuario -= precoOperacao;
-
-            // --- Cálculo transporte mais próximo ---
-            var d1 = calcularDistancia(lat, lon, transporte1.lat, transporte1.lng);
-            var d2 = calcularDistancia(lat, lon, transporte2.lat, transporte2.lng);
-            var maisProximo = (d1 < d2) ? "Transporte 1" : "Transporte 2";
-            var tempoMinutos = Math.round(Math.min(d1,d2)/30*60); // 30 km/h média
-
-            alert("Operação realizada! 10 Kz deduzidos.\nSaldo restante: "+saldoUsuario+" Kz\nTransporte mais próximo: "+maisProximo+"\nTempo estimado: "+tempoMinutos+" min");
-
-        }, function(error){
-            // --- Tratamento de erros detalhado ---
-            switch(error.code){
-                case error.PERMISSION_DENIED:
-                    alert("Erro: Permissão de GPS negada. Ative a localização nas configurações do app.");
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    alert("Erro: Localização indisponível. Verifique se o GPS está ativo.");
-                    break;
-                case error.TIMEOUT:
-                    alert("Erro: Tempo de busca esgotado. Tente novamente em um local aberto.");
-                    break;
-                case error.UNKNOWN_ERROR:
-                    alert("Erro desconhecido ao obter localização.");
-                    break;
-            }
-        }, {timeout:10000}); // tempo máximo de 10 segundos
-    } else {
-        alert("GPS não disponível neste dispositivo.");
-    }
-}
-
-// --- Função para calcular distância ---
-function calcularDistancia(lat1, lon1, lat2, lon2){
-    var R = 6371; // km
-    var dLat = (lat2-lat1)*Math.PI/180;
-    var dLon = (lon2-lon1)*Math.PI/180;
-    var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
-            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180) *
-            Math.sin(dLon/2)*Math.sin(dLon/2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-</script>
-
-<!-- --- GOOGLE MAPS API --- -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyChpU8bvzDz6aTuq6TSOFOAbhNxafUu5ao&callback=iniciarMapa" async defer></script>
-
+        // Solicitar permissão para notificações
+        if("Notification" in window){
+            Notification.requestPermission();
+        }
+    </script>
 </body>
 </html>
