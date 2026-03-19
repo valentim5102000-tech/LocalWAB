@@ -3,247 +3,198 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LocalWab - Rastreamento Profissional</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<title>LocalWab</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#cc0000">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
-/* RESET + BASE */
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Roboto',sans-serif; }
-html, body { width:100%; height:100%; background:#f5f5f5; overflow:hidden; }
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+body{background:#f5f5f5;}
 
-/* HEADER */
-header {
-  background:#cc0000; color:white;
-  text-align:center; padding:15px 0;
-  font-size:1.6rem; font-weight:700;
+header{
+  background:#cc0000;
+  color:#fff;
+  text-align:center;
+  padding:15px;
+  font-size:20px;
+  font-weight:bold;
 }
 
-/* LAYOUT */
-#app { display:flex; flex-direction:column; height:calc(100% - 60px); }
-#map { flex:1; width:100%; touch-action: pan-x pan-y pinch-zoom; }
-
-/* PAINEL INFERIOR */
-#panel {
-  background:white; padding:15px;
-  box-shadow:0 -3px 10px rgba(0,0,0,0.1);
-  overflow-y:auto;
+#map{
+  height:60vh;
 }
 
-/* INPUTS / BOTÕES */
-input {
-  width:calc(100% - 22px); margin-bottom:10px;
-  padding:10px; border-radius:8px; border:1px solid #ccc;
-}
-button {
-  background:#cc0000; color:white; border:none;
-  padding:10px 16px; border-radius:8px;
-  font-weight:700; cursor:pointer; transition:0.3s;
-}
-button:hover { background:#990000; }
-button:disabled { background:#aaa; cursor:not-allowed; }
-
-/* WHATSAPP */
-#whatsapp { display:flex; justify-content:center; margin-top:10px; }
-#whatsapp a {
-  background:#25D366; color:white; padding:10px 20px;
-  border-radius:50px; text-decoration:none;
-  font-weight:700; display:flex; align-items:center;
-}
-#whatsapp a i { margin-right:8px; }
-
-/* HISTÓRICO */
-#history {
-  max-height:100px; overflow-y:auto;
-  background:#fafafa; border:1px solid #ddd;
-  border-radius:8px; padding:8px; margin-top:10px;
+#panel{
+  padding:10px;
+  background:#fff;
 }
 
-/* RESPONSIVO */
-@media(max-width:768px){
-  header { font-size:1.4rem; }
-  button { width:100%; margin-bottom:8px; }
+input{
+  width:100%;
+  padding:10px;
+  margin-bottom:8px;
+  border-radius:5px;
+  border:1px solid #ccc;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:5px;
+  border:none;
+  border-radius:5px;
+  font-weight:bold;
+}
+
+#payBtn{background:#28a745;color:#fff;}
+#trackBtn{background:#ff9800;color:#fff;display:none;}
+
+#status{
+  margin-top:10px;
+  text-align:center;
+  font-weight:bold;
+}
+
+#offline{
+  background:#ffc107;
+  text-align:center;
+  padding:5px;
+  display:none;
 }
 </style>
 </head>
 
 <body>
-<header>LocalWab - Rastreamento Profissional</header>
 
-<div id="app">
-  <div id="map"></div>
+<header>LocalWab</header>
 
-  <div id="panel">
-    <input type="text" id="userName" placeholder="Seu nome">
-    <input type="number" id="userPhone" placeholder="Número de contacto">
+<div id="offline">⚠️ Estás offline</div>
 
-    <button id="payBtn">Pagar 10 Kz</button>
-    <button id="trackBtn" style="display:none;">Iniciar Rastreamento</button>
+<div id="map"></div>
 
-    <div id="status" style="margin-top:10px; font-weight:bold;"></div>
-    <div id="history"></div>
+<div id="panel">
+<input id="userName" placeholder="Seu nome">
+<input id="userPhone" placeholder="Telefone">
 
-    <div id="whatsapp">
-      <a href="https://wa.me/244940045782" target="_blank">
-        <i class="fab fa-whatsapp"></i> Suporte WhatsApp
-      </a>
-    </div>
-  </div>
+<button id="payBtn">Pagar 10 KZ</button>
+<button id="trackBtn">Iniciar Rastreamento</button>
+
+<div id="status"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-/* =====================================================
-   CONFIGURANDO O MAPA
-===================================================== */
-const map = L.map('map', { zoomControl:true })
-  .setView([-8.8383, 13.2344], 12);
+// ================= MAPA CORRIGIDO =================
+const map = L.map('map', {
+  zoomControl: true,
+  dragging: true,
+  tap: true
+}).setView([-8.83, 13.23], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap'
+  maxZoom:19
 }).addTo(map);
 
-/* =====================================================
-   TRANSPORTES SIMULADOS
-===================================================== */
-const transports = [
-  {id:1, lat:-8.8383, lng:13.2344, marker:null},
-  {id:2, lat:-8.8430, lng:13.2500, marker:null},
-  {id:3, lat:-8.8200, lng:13.2200, marker:null}
-];
-
-transports.forEach(t=>{
-  t.marker = L.marker([t.lat,t.lng])
-    .addTo(map).bindPopup("Transporte " + t.id);
-});
-
-/* HISTÓRICO */
-const historyDiv = document.getElementById('history');
 let userMarker = null;
 
-/* =====================================================
-   FUNÇÃO DE PAGAMENTO (Backend preparado)
-===================================================== */
-document.getElementById('payBtn').addEventListener('click', async ()=>{
-  const name = document.getElementById('userName').value;
-  const phone = document.getElementById('userPhone').value;
-  if(!name || !phone){
-    alert("Por favor, preencha nome e telefone antes de pagar.");
+// evitar refresh automático
+let refreshing = false;
+window.onbeforeunload = function () {
+  if (!refreshing) return false;
+};
+
+// ================= OFFLINE =================
+function updateOnlineStatus(){
+  offline.style.display = navigator.onLine ? "none":"block";
+}
+window.addEventListener('online',updateOnlineStatus);
+window.addEventListener('offline',updateOnlineStatus);
+updateOnlineStatus();
+
+// ================= SERVICE WORKER =================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+// ================= PAGAMENTO =================
+payBtn.onclick = async () => {
+
+  if (!navigator.onLine) {
+    status.innerText = "Liga internet para pagar.";
     return;
   }
 
-  document.getElementById('status').innerText = "A processar pagamento...";
-  document.getElementById('payBtn').disabled = true;
+  const name = userName.value;
+  const phone = userPhone.value;
+
+  if (!name || !phone) {
+    alert("Preencha os dados");
+    return;
+  }
+
+  status.innerText = "A processar pagamento...";
 
   try {
-    const res = await fetch('/api/pay',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ name, phone, amount:10 })
+    const res = await fetch('/api/pay', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, phone, amount:10})
     });
+
     const data = await res.json();
 
-    if(data.success){
-      document.getElementById('status').innerText = "Pagamento confirmado!";
-      document.getElementById('trackBtn').style.display = "block";
-      document.getElementById('payBtn').style.display = "none";
+    if (data.success) {
+      status.innerText = "Confirma no Multicaixa Express...";
+      connectWS(data.paymentId);
+    }
+
+  } catch {
+    status.innerText = "Erro no servidor";
+  }
+};
+
+// ================= WEBSOCKET =================
+function connectWS(paymentId){
+  const ws = new WebSocket(`ws://localhost:3000/ws?paymentId=${paymentId}`);
+
+  ws.onmessage = (msg)=>{
+    const data = JSON.parse(msg.data);
+
+    if(data.status === "paid"){
+      status.innerText = "Pagamento confirmado!";
+      trackBtn.style.display = "block";
+      payBtn.style.display = "none";
+      ws.close();
+    }
+  };
+}
+
+// ================= GPS =================
+trackBtn.onclick = ()=>{
+
+  navigator.geolocation.watchPosition(pos=>{
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    if(!userMarker){
+      userMarker = L.marker([lat,lng]).addTo(map);
     } else {
-      document.getElementById('status').innerText = "Pagamento falhou!";
-      document.getElementById('payBtn').disabled = false;
+      userMarker.setLatLng([lat,lng]);
     }
 
-  } catch(err){
-    document.getElementById('status').innerText = "Erro no pagamento!";
-    document.getElementById('payBtn').disabled = false;
-  }
-});
+    map.setView([lat,lng],16);
 
-/* =====================================================
-   FUNÇÃO DE RASTREAMENTO (GPS real)
-===================================================== */
-document.getElementById('trackBtn').addEventListener('click', ()=>{
-  const name = document.getElementById('userName').value;
-  const phone = document.getElementById('userPhone').value;
-
-  document.getElementById('status').innerText = "Rastreamento iniciado para " + name;
-
-  if(!navigator.geolocation){
-    alert("GPS não suportado!");
-    return;
-  }
-
-  navigator.geolocation.watchPosition(position=>{
-    const { latitude, longitude } = position.coords;
-    updateUserPosition(latitude, longitude);
-  },{
-    enableHighAccuracy:true,
-    maximumAge:1000,
-    timeout:5000
+  }, ()=>alert("Erro GPS"), {
+    enableHighAccuracy:true
   });
-
-  simulateMovement();
-});
-
-/* =====================================================
-   ATUALIZA POSIÇÃO DO USUÁRIO
-===================================================== */
-function updateUserPosition(lat,lng){
-  if(!userMarker){
-    userMarker = L.marker([lat,lng],{
-      icon:L.icon({
-        iconUrl:'https://cdn-icons-png.flaticon.com/512/64/64113.png',
-        iconSize:[40,40]
-      })
-    }).addTo(map).bindPopup("Você");
-  } else {
-    userMarker.setLatLng([lat,lng]);
-  }
-  map.setView([lat,lng],14);
-  addToHistory(lat,lng);
-  notifyArrival(lat,lng);
-}
-
-/* =====================================================
-   HISTÓRICO
-===================================================== */
-function addToHistory(lat,lng){
-  const now = new Date().toLocaleTimeString();
-  const d = document.createElement('div');
-  d.innerText = `${now} — ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  historyDiv.prepend(d);
-}
-
-/* =====================================================
-   SIMULA TRANSPORTE MOVIMENTO
-===================================================== */
-function simulateMovement(){
-  setInterval(() => {
-    transports.forEach(t=>{
-      t.lat += (Math.random()-0.5)/5000;
-      t.lng += (Math.random()-0.5)/5000;
-      t.marker.setLatLng([t.lat,t.lng]);
-    });
-  },1000);
-}
-
-/* =====================================================
-   NOTIFICAÇÃO QUANDO TRANSPORTE ESTÁ PRÓXIMO
-===================================================== */
-function notifyArrival(lat,lng){
-  transports.forEach(t=>{
-    const dist = Math.hypot(lat - t.lat, lng - t.lng);
-    if(dist < 0.001 && Notification.permission==="granted"){
-      new Notification("LocalWab",{body:`Transporte ${t.id} perto de você!`});
-    }
-  });
-}
-
-/* PERMISSÃO NOTIFICAÇÃO */
-if("Notification" in window){
-  Notification.requestPermission();
-}
+};
 </script>
+
 </body>
 </html>
