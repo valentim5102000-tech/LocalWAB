@@ -53,6 +53,7 @@ button{
 
 #payBtn{background:#28a745;color:#fff;}
 #trackBtn{background:#ff9800;color:#fff;display:none;}
+#checkBtn{background:#007bff;color:#fff;display:none;}
 
 #status{
   margin-top:10px;
@@ -82,6 +83,7 @@ button{
 <input id="userPhone" placeholder="Telefone">
 
 <button id="payBtn">Pagar 10 KZ</button>
+<button id="checkBtn">Já confirmei pagamento</button>
 <button id="trackBtn">Iniciar Rastreamento</button>
 
 <div id="status"></div>
@@ -90,24 +92,14 @@ button{
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-// ================= MAPA CORRIGIDO =================
-const map = L.map('map', {
-  zoomControl: true,
-  dragging: true,
-  tap: true
-}).setView([-8.83, 13.23], 13);
+// ================= MAPA =================
+const map = L.map('map').setView([-8.83,13.23],13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   maxZoom:19
 }).addTo(map);
 
-let userMarker = null;
-
-// evitar refresh automático
-let refreshing = false;
-window.onbeforeunload = function () {
-  if (!refreshing) return false;
-};
+let userMarker=null;
 
 // ================= OFFLINE =================
 function updateOnlineStatus(){
@@ -122,75 +114,111 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
-// ================= PAGAMENTO =================
-payBtn.onclick = async () => {
+let currentPaymentId=null;
 
-  if (!navigator.onLine) {
-    status.innerText = "Liga internet para pagar.";
+// ================= PAGAMENTO =================
+payBtn.onclick = async ()=>{
+
+  if(!navigator.onLine){
+    status.innerText="Liga a internet para pagar.";
     return;
   }
 
-  const name = userName.value;
-  const phone = userPhone.value;
+  const name=userName.value;
+  const phone=userPhone.value;
 
-  if (!name || !phone) {
+  if(!name || !phone){
     alert("Preencha os dados");
     return;
   }
 
-  status.innerText = "A processar pagamento...";
+  status.innerText="A enviar pedido de pagamento...";
 
-  try {
-    const res = await fetch('/api/pay', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({name, phone, amount:10})
+  try{
+    const res=await fetch('/api/pay',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,phone,amount:10})
     });
 
-    const data = await res.json();
+    const data=await res.json();
 
-    if (data.success) {
-      status.innerText = "Confirma no Multicaixa Express...";
+    if(data.success){
+      currentPaymentId=data.paymentId;
+
+      status.innerText="Receberás uma notificação no Multicaixa Express. Confirma o pagamento.";
+
+      checkBtn.style.display="block";
+
+      // WebSocket automático
       connectWS(data.paymentId);
     }
 
-  } catch {
-    status.innerText = "Erro no servidor";
+  }catch{
+    status.innerText="Erro ao iniciar pagamento.";
   }
 };
 
 // ================= WEBSOCKET =================
 function connectWS(paymentId){
-  const ws = new WebSocket(`ws://localhost:3000/ws?paymentId=${paymentId}`);
+  const ws=new WebSocket(`ws://localhost:3000/ws?paymentId=${paymentId}`);
 
-  ws.onmessage = (msg)=>{
-    const data = JSON.parse(msg.data);
+  ws.onmessage=(msg)=>{
+    const data=JSON.parse(msg.data);
 
-    if(data.status === "paid"){
-      status.innerText = "Pagamento confirmado!";
-      trackBtn.style.display = "block";
-      payBtn.style.display = "none";
+    if(data.status==="paid"){
+      liberarAcesso();
       ws.close();
     }
   };
 }
 
-// ================= GPS =================
-trackBtn.onclick = ()=>{
+// ================= BOTÃO MANUAL =================
+checkBtn.onclick = async ()=>{
 
+  if(!currentPaymentId) return;
+
+  status.innerText="A verificar pagamento...";
+
+  try{
+    const res=await fetch(`/api/status/${currentPaymentId}`);
+    const data=await res.json();
+
+    if(data.status==="paid"){
+      liberarAcesso();
+    }else{
+      status.innerText="Pagamento ainda não confirmado.";
+    }
+
+  }catch{
+    status.innerText="Erro ao verificar.";
+  }
+};
+
+// ================= LIBERAR APP =================
+function liberarAcesso(){
+  status.innerText="Pagamento confirmado!";
+  trackBtn.style.display="block";
+  payBtn.style.display="none";
+  checkBtn.style.display="none";
+}
+
+// ================= GPS =================
+trackBtn.onclick=()=>{
   navigator.geolocation.watchPosition(pos=>{
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
+    const lat=pos.coords.latitude;
+    const lng=pos.coords.longitude;
 
     if(!userMarker){
-      userMarker = L.marker([lat,lng]).addTo(map);
-    } else {
+      userMarker=L.marker([lat,lng]).addTo(map)
+        .bindPopup("Você");
+    }else{
       userMarker.setLatLng([lat,lng]);
     }
 
     map.setView([lat,lng],16);
 
-  }, ()=>alert("Erro GPS"), {
+  },()=>alert("Erro GPS"),{
     enableHighAccuracy:true
   });
 };
