@@ -3,105 +3,212 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>LocalWab</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#cc0000">
 <link rel="apple-touch-icon" href="icon-192.png">
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
 body{background:#f5f5f5;}
 
-header{
-  background:#cc0000;
-  color:#fff;
-  text-align:center;
-  padding:15px;
-  font-size:20px;
-  font-weight:bold;
-}
-
-#map{
-  height:60vh;
-}
-
-#panel{
-  padding:10px;
-  background:#fff;
-}
-
-input{
-  width:100%;
-  padding:10px;
-  margin-bottom:8px;
-  border-radius:5px;
-  border:1px solid #ccc;
-}
-
-button{
-  width:100%;
-  padding:12px;
-  margin-top:5px;
-  border:none;
-  border-radius:5px;
-  font-weight:bold;
-}
-
+header{background:#cc0000;color:#fff;text-align:center;padding:15px;font-size:20px;font-weight:bold;}
+#map{height:60vh;margin-top:10px;}
+#panel{padding:10px;background:#fff;border-radius:8px;margin:10px;}
+input, select{width:100%;padding:10px;margin-bottom:8px;border-radius:5px;border:1px solid #ccc;}
+button{width:100%;padding:12px;margin-top:5px;border:none;border-radius:5px;font-weight:bold;}
 #payBtn{background:#28a745;color:#fff;}
 #trackBtn{background:#ff9800;color:#fff;display:none;}
 #checkBtn{background:#007bff;color:#fff;display:none;}
-
-#status{
-  margin-top:10px;
-  text-align:center;
-  font-weight:bold;
-}
-
-#offline{
-  background:#ffc107;
-  text-align:center;
-  padding:5px;
-  display:none;
-}
+#status{margin-top:10px;text-align:center;font-weight:bold;}
+#offline{background:#ffc107;text-align:center;padding:5px;display:none;}
+.tabs{display:flex;justify-content:center;margin-bottom:10px;}
+.tab{padding:10px 20px;margin:0 5px;background:#ddd;border-radius:5px;cursor:pointer;}
+.tab.active{background:#cc0000;color:#fff;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
 </style>
 </head>
 
 <body>
 
 <header>LocalWab</header>
-
 <div id="offline">⚠️ Estás offline</div>
 
-<div id="map"></div>
-
 <div id="panel">
-<input id="userName" placeholder="Seu nome">
-<input id="userPhone" placeholder="Telefone">
+  <div class="tabs">
+    <div class="tab active" data-tab="login">Login</div>
+    <div class="tab" data-tab="cadUser">Cadastrar Usuário</div>
+    <div class="tab" data-tab="cadEmpresa">Cadastrar Empresa</div>
+  </div>
 
-<button id="payBtn">Pagar 10 KZ</button>
-<button id="checkBtn">Já confirmei pagamento</button>
-<button id="trackBtn">Iniciar Rastreamento</button>
+  <!-- LOGIN -->
+  <div class="tab-content active" id="login">
+    <select id="loginType">
+      <option value="user">Usuário</option>
+      <option value="empresa">Membro Empresa</option>
+    </select>
+    <input id="loginName" placeholder="Nome completo">
+    <input id="loginPhone" placeholder="Telefone">
+    <input id="loginFuncao" placeholder="Função (Empresa)" style="display:none;">
+    <input id="loginEmpresaId" placeholder="ID da Empresa" style="display:none;">
+    <button id="loginBtn">Entrar</button>
+  </div>
 
-<div id="status"></div>
+  <!-- CADASTRO USUÁRIO -->
+  <div class="tab-content" id="cadUser">
+    <input id="cadName" placeholder="Nome completo">
+    <input id="cadPhone" placeholder="Telefone">
+    <input id="cadIdade" placeholder="Idade">
+    <select id="cadSexo">
+      <option value="">Selecione Sexo</option>
+      <option value="Masculino">Masculino</option>
+      <option value="Feminino">Feminino</option>
+    </select>
+    <button id="cadUserBtn">Cadastrar-se</button>
+  </div>
+
+  <!-- CADASTRO EMPRESA -->
+  <div class="tab-content" id="cadEmpresa">
+    <input id="cadEmpName" placeholder="Nome completo">
+    <input id="cadEmpPhone" placeholder="Telefone">
+    <input id="cadEmpIdade" placeholder="Idade">
+    <select id="cadEmpSexo">
+      <option value="">Selecione Sexo</option>
+      <option value="Masculino">Masculino</option>
+      <option value="Feminino">Feminino</option>
+    </select>
+    <input id="cadEmpFuncao" placeholder="Função">
+    <input id="cadEmpEmpresa" placeholder="Empresa">
+    <input id="cadEmpID" placeholder="ID da Empresa">
+    <button id="cadEmpBtn">Cadastrar-se</button>
+  </div>
+
+  <div id="status"></div>
 </div>
+
+<div id="map"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-// ================= MAPA =================
+// ================== TABS ==================
+const tabs = document.querySelectorAll('.tab');
+const tabContents = document.querySelectorAll('.tab-content');
+tabs.forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    tabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    tabContents.forEach(c=>c.classList.remove('active'));
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ================== LOGIN ==================
+const loginType = document.getElementById('loginType');
+loginType.addEventListener('change', ()=>{
+  const tipo = loginType.value;
+  document.getElementById('loginFuncao').style.display = tipo==="empresa"?"block":"none";
+  document.getElementById('loginEmpresaId').style.display = tipo==="empresa"?"block":"none";
+});
+
+// ================== MAPA ==================
 const map = L.map('map').setView([-8.83,13.23],13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+let userMarker = null;
+let vehicleMarkers = {};
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19
-}).addTo(map);
+// ================== RASTREAMENTO EM TEMPO REAL ==================
+let ws = new WebSocket("ws://localhost:3000/ws"); // URL do seu servidor WS
 
-let userMarker=null;
+ws.onmessage = (msg)=>{
+  const data = JSON.parse(msg.data);
+  // Filtrar conforme usuário ou membro empresa
+  if(currentLogin){
+    if(currentLogin.type==="user"){
+      // usuário comum: pegar os 2 veículos mais próximos
+      data.vehicles.sort((a,b)=>{
+        const d1 = distance(userLat,userLng,a.lat,a.lng);
+        const d2 = distance(userLat,userLng,b.lat,b.lng);
+        return d1-d2;
+      });
+      showVehicles(data.vehicles.slice(0,2));
+    } else if(currentLogin.type==="empresa"){
+      // membro empresa: mostrar apenas veículos da empresa
+      const filtered = data.vehicles.filter(v=>v.empresa===currentLogin.empresa);
+      showVehicles(filtered);
+    }
+  }
+};
 
-// ================= OFFLINE =================
+function showVehicles(vehicles){
+  vehicles.forEach(v=>{
+    if(!vehicleMarkers[v.id]){
+      vehicleMarkers[v.id] = L.marker([v.lat,v.lng]).addTo(map)
+        .bindPopup(`Veículo ${v.id} - ${v.empresa} - ${v.rota}`);
+    } else {
+      vehicleMarkers[v.id].setLatLng([v.lat,v.lng]);
+    }
+  });
+}
+
+function distance(lat1, lng1, lat2, lng2){
+  return Math.sqrt(Math.pow(lat1-lat2,2)+Math.pow(lng1-lng2,2));
+}
+
+// ================== LOGIN LOCAL ==================
+let currentLogin = null;
+let userLat=0,userLng=0;
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  const tipo = loginType.value;
+  const nome = document.getElementById('loginName').value;
+  const telefone = document.getElementById('loginPhone').value;
+  if(!nome||!telefone){alert("Preencha os campos!"); return;}
+  currentLogin = {type:tipo,nome,telefone};
+  if(tipo==="empresa"){
+    const funcao = document.getElementById('loginFuncao').value;
+    const empresaID = document.getElementById('loginEmpresaId').value;
+    if(!funcao||!empresaID){alert("Preencha função e ID da empresa!"); return;}
+    currentLogin.funcao = funcao;
+    currentLogin.empresa = empresaID;
+  }
+  alert(`Login realizado como ${tipo}`);
+  // Iniciar rastreamento GPS do usuário
+  navigator.geolocation.watchPosition(pos=>{
+    userLat=pos.coords.latitude;
+    userLng=pos.coords.longitude;
+    if(!userMarker){
+      userMarker=L.marker([userLat,userLng]).addTo(map).bindPopup("Você");
+    } else {userMarker.setLatLng([userLat,userLng]);}
+    map.setView([userLat,userLng],16);
+  },()=>alert("Erro GPS"),{enableHighAccuracy:true});
+});
+
+// ================== CADASTRO ==================
+document.getElementById('cadUserBtn').addEventListener('click', ()=>{
+  const n=document.getElementById('cadName').value;
+  const t=document.getElementById('cadPhone').value;
+  const i=document.getElementById('cadIdade').value;
+  const s=document.getElementById('cadSexo').value;
+  if(!n||!t||!i||!s){alert("Preencha todos os campos!"); return;}
+  alert("Usuário cadastrado com sucesso!");
+});
+
+document.getElementById('cadEmpBtn').addEventListener('click', ()=>{
+  const n=document.getElementById('cadEmpName').value;
+  const t=document.getElementById('cadEmpPhone').value;
+  const i=document.getElementById('cadEmpIdade').value;
+  const s=document.getElementById('cadEmpSexo').value;
+  const f=document.getElementById('cadEmpFuncao').value;
+  const e=document.getElementById('cadEmpEmpresa').value;
+  const id=document.getElementById('cadEmpID').value;
+  if(!n||!t||!i||!s||!f||!e||!id){alert("Preencha todos os campos!"); return;}
+  alert("Membro da empresa cadastrado com sucesso!");
+});
+
+// ================== OFFLINE ==================
 function updateOnlineStatus(){
   offline.style.display = navigator.onLine ? "none":"block";
 }
@@ -109,120 +216,6 @@ window.addEventListener('online',updateOnlineStatus);
 window.addEventListener('offline',updateOnlineStatus);
 updateOnlineStatus();
 
-// ================= SERVICE WORKER =================
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-
-let currentPaymentId=null;
-
-// ================= PAGAMENTO =================
-payBtn.onclick = async ()=>{
-
-  if(!navigator.onLine){
-    status.innerText="Liga a internet para pagar.";
-    return;
-  }
-
-  const name=userName.value;
-  const phone=userPhone.value;
-
-  if(!name || !phone){
-    alert("Preencha os dados");
-    return;
-  }
-
-  status.innerText="A enviar pedido de pagamento...";
-
-  try{
-    const res=await fetch('/api/pay',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name,phone,amount:10})
-    });
-
-    const data=await res.json();
-
-    if(data.success){
-      currentPaymentId=data.paymentId;
-
-      status.innerText="Receberás uma notificação no Multicaixa Express. Confirma o pagamento.";
-
-      checkBtn.style.display="block";
-
-      // WebSocket automático
-      connectWS(data.paymentId);
-    }
-
-  }catch{
-    status.innerText="Erro ao iniciar pagamento.";
-  }
-};
-
-// ================= WEBSOCKET =================
-function connectWS(paymentId){
-  const ws=new WebSocket(`ws://localhost:3000/ws?paymentId=${paymentId}`);
-
-  ws.onmessage=(msg)=>{
-    const data=JSON.parse(msg.data);
-
-    if(data.status==="paid"){
-      liberarAcesso();
-      ws.close();
-    }
-  };
-}
-
-// ================= BOTÃO MANUAL =================
-checkBtn.onclick = async ()=>{
-
-  if(!currentPaymentId) return;
-
-  status.innerText="A verificar pagamento...";
-
-  try{
-    const res=await fetch(`/api/status/${currentPaymentId}`);
-    const data=await res.json();
-
-    if(data.status==="paid"){
-      liberarAcesso();
-    }else{
-      status.innerText="Pagamento ainda não confirmado.";
-    }
-
-  }catch{
-    status.innerText="Erro ao verificar.";
-  }
-};
-
-// ================= LIBERAR APP =================
-function liberarAcesso(){
-  status.innerText="Pagamento confirmado!";
-  trackBtn.style.display="block";
-  payBtn.style.display="none";
-  checkBtn.style.display="none";
-}
-
-// ================= GPS =================
-trackBtn.onclick=()=>{
-  navigator.geolocation.watchPosition(pos=>{
-    const lat=pos.coords.latitude;
-    const lng=pos.coords.longitude;
-
-    if(!userMarker){
-      userMarker=L.marker([lat,lng]).addTo(map)
-        .bindPopup("Você");
-    }else{
-      userMarker.setLatLng([lat,lng]);
-    }
-
-    map.setView([lat,lng],16);
-
-  },()=>alert("Erro GPS"),{
-    enableHighAccuracy:true
-  });
-};
 </script>
-
 </body>
 </html>
