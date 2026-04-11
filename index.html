@@ -4,217 +4,235 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LocalWab</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#cc0000">
-<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
 body{background:#f5f5f5;}
-
 header{background:#cc0000;color:#fff;text-align:center;padding:15px;font-size:20px;font-weight:bold;}
-#map{height:60vh;margin-top:10px;}
-#panel{padding:10px;background:#fff;border-radius:8px;margin:10px;}
-input, select{width:100%;padding:10px;margin-bottom:8px;border-radius:5px;border:1px solid #ccc;}
-button{width:100%;padding:12px;margin-top:5px;border:none;border-radius:5px;font-weight:bold;}
-#payBtn{background:#28a745;color:#fff;}
-#trackBtn{background:#ff9800;color:#fff;display:none;}
-#checkBtn{background:#007bff;color:#fff;display:none;}
-#status{margin-top:10px;text-align:center;font-weight:bold;}
-#offline{background:#ffc107;text-align:center;padding:5px;display:none;}
-.tabs{display:flex;justify-content:center;margin-bottom:10px;}
-.tab{padding:10px 20px;margin:0 5px;background:#ddd;border-radius:5px;cursor:pointer;}
-.tab.active{background:#cc0000;color:#fff;}
-.tab-content{display:none;}
-.tab-content.active{display:block;}
+#tabs{display:flex;justify-content:center;margin-top:10px;gap:5px;flex-wrap:wrap;}
+.tab{padding:10px;background:#ddd;border-radius:5px;cursor:pointer;font-weight:bold;}
+.tab.active{background:#cc0000;color:white;}
+.content{padding:15px;background:white;margin:10px auto;width:90%;max-width:400px;border-radius:10px;display:none;}
+input, select{width:100%;padding:10px;margin:5px 0;border-radius:5px;border:1px solid #ccc;}
+button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:5px;font-weight:bold;background:#28a745;color:white;cursor:pointer;}
 </style>
 </head>
+<body>
 
+<header>LocalWab</header>
+
+<div id="tabs">
+  <div class="tab active" data-target="login">Login</div>
+  <div class="tab" data-target="cadUser">Cadastrar Usuário</div>
+  <div class="tab" data-target="cadEmpresa">Cadastrar Empresa</div>
+</div>
+
+<div id="login" class="content" style="display:block;">
+  <select id="loginType">
+    <option value="user">Usuário</option>
+    <option value="empresa">Empresa</option>
+    <option value="admin">Admin</option>
+  </select>
+  <input id="loginName" placeholder="Nome">
+  <input id="loginPhone" placeholder="Telefone">
+  <input id="loginFuncao" placeholder="Função (empresa)" style="display:none;">
+  <input id="loginEmpresaId" placeholder="ID Empresa" style="display:none;">
+  <input id="adminCode" placeholder="Código Admin" style="display:none;">
+  <button id="loginBtn">Entrar</button>
+</div>
+
+<div id="cadUser" class="content">
+  <input placeholder="Nome">
+  <input placeholder="Telefone">
+  <button>Cadastrar</button>
+</div>
+
+<div id="cadEmpresa" class="content">
+  <input placeholder="Nome">
+  <input placeholder="Telefone">
+  <input placeholder="Empresa">
+  <button>Cadastrar</button>
+</div>
+
+<script>
+// Tabs
+const tabs=document.querySelectorAll('.tab');
+const contents=document.querySelectorAll('.content');
+tabs.forEach(tab=>{
+ tab.onclick=()=>{
+  tabs.forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  contents.forEach(c=>c.style.display=c.id===tab.dataset.target?'block':'none');
+ }
+});
+
+// Mostrar campos conforme tipo
+const loginType=document.getElementById('loginType');
+loginType.onchange=()=>{
+ document.getElementById('loginFuncao').style.display=loginType.value==='empresa'?'block':'none';
+ document.getElementById('loginEmpresaId').style.display=loginType.value==='empresa'?'block':'none';
+ document.getElementById('adminCode').style.display=loginType.value==='admin'?'block':'none';
+};
+
+// LOGIN + REDIRECIONAMENTO
+document.getElementById('loginBtn').onclick=()=>{
+ const tipo=loginType.value;
+ const nome=document.getElementById('loginName').value;
+ const telefone=document.getElementById('loginPhone').value;
+ const empresaID=document.getElementById('loginEmpresaId').value;
+ const adminCode=document.getElementById('adminCode').value;
+
+ if(!nome || !telefone){ alert('Preencha os campos'); return; }
+
+ if(tipo==='empresa' && !empresaID){ alert('Informe ID da empresa'); return; }
+ if(tipo==='admin' && adminCode!=='1234'){ alert('Código admin inválido'); return; }
+
+ // REDIRECIONAMENTO
+ if(tipo==='user'){
+   window.location.href='usuario.html';
+ }
+ else if(tipo==='empresa'){
+   window.location.href='empresa.html';
+ }
+ else if(tipo==='admin'){
+   window.location.href='admin.html';
+ }
+};
+</script>
+
+</body>
+</html>
+```html
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LocalWab</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+body{background:#f5f5f5;}
+header{background:#cc0000;color:#fff;text-align:center;padding:15px;font-size:20px;font-weight:bold;}
+#tabs{display:flex;justify-content:center;margin-top:10px;gap:5px;flex-wrap:wrap;}
+.tab{padding:10px;background:#ddd;border-radius:5px;cursor:pointer;font-weight:bold;}
+.tab.active{background:#cc0000;color:white;}
+.content{padding:15px;background:white;margin:10px auto;width:90%;max-width:400px;border-radius:10px;display:none;}
+input, select{width:100%;padding:10px;margin:5px 0;border-radius:5px;border:1px solid #ccc;}
+button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:5px;font-weight:bold;background:#28a745;color:white;cursor:pointer;}
+#map{height:60vh;margin-top:10px;display:none;border-radius:10px;}
+#status{text-align:center;font-weight:bold;margin-top:10px;}
+#offline{background:#ffc107;text-align:center;padding:5px;display:none;}
+</style>
+</head>
 <body>
 
 <header>LocalWab</header>
 <div id="offline">⚠️ Estás offline</div>
 
-<div id="panel">
-  <div class="tabs">
-    <div class="tab active" data-tab="login">Login</div>
-    <div class="tab" data-tab="cadUser">Cadastrar Usuário</div>
-    <div class="tab" data-tab="cadEmpresa">Cadastrar Empresa</div>
-  </div>
+<div id="tabs">
+  <div class="tab active" data-target="login">Login</div>
+  <div class="tab" data-target="cadUser">Cadastrar Usuário</div>
+  <div class="tab" data-target="cadEmpresa">Cadastrar Empresa</div>
+  <div class="tab" data-target="agente">Agente</div>
+</div>
 
-  <!-- LOGIN -->
-  <div class="tab-content active" id="login">
-    <select id="loginType">
-      <option value="user">Usuário</option>
-      <option value="empresa">Membro Empresa</option>
-    </select>
-    <input id="loginName" placeholder="Nome completo">
-    <input id="loginPhone" placeholder="Telefone">
-    <input id="loginFuncao" placeholder="Função (Empresa)" style="display:none;">
-    <input id="loginEmpresaId" placeholder="ID da Empresa" style="display:none;">
-    <button id="loginBtn">Entrar</button>
-  </div>
+<div id="login" class="content" style="display:block;">
+  <select id="loginType">
+    <option value="user">Usuário</option>
+    <option value="empresa">Empresa</option>
+  </select>
+  <input id="loginName" placeholder="Nome">
+  <input id="loginPhone" placeholder="Telefone">
+  <input id="loginFuncao" placeholder="Função" style="display:none;">
+  <input id="loginEmpresaId" placeholder="ID Empresa" style="display:none;">
+  <button id="loginBtn">Entrar</button>
+  <button id="ussdBtn">Modo USSD</button>
+</div>
 
-  <!-- CADASTRO USUÁRIO -->
-  <div class="tab-content" id="cadUser">
-    <input id="cadName" placeholder="Nome completo">
-    <input id="cadPhone" placeholder="Telefone">
-    <input id="cadIdade" placeholder="Idade">
-    <select id="cadSexo">
-      <option value="">Selecione Sexo</option>
-      <option value="Masculino">Masculino</option>
-      <option value="Feminino">Feminino</option>
-    </select>
-    <button id="cadUserBtn">Cadastrar-se</button>
-  </div>
+<div id="cadUser" class="content">
+  <input id="cadUserName" placeholder="Nome">
+  <input id="cadUserPhone" placeholder="Telefone">
+  <input id="cadUserIdade" placeholder="Idade">
+  <select id="cadUserSexo">
+    <option value="">Sexo</option>
+    <option>Masculino</option>
+    <option>Feminino</option>
+  </select>
+  <button>Cadastrar</button>
+</div>
 
-  <!-- CADASTRO EMPRESA -->
-  <div class="tab-content" id="cadEmpresa">
-    <input id="cadEmpName" placeholder="Nome completo">
-    <input id="cadEmpPhone" placeholder="Telefone">
-    <input id="cadEmpIdade" placeholder="Idade">
-    <select id="cadEmpSexo">
-      <option value="">Selecione Sexo</option>
-      <option value="Masculino">Masculino</option>
-      <option value="Feminino">Feminino</option>
-    </select>
-    <input id="cadEmpFuncao" placeholder="Função">
-    <input id="cadEmpEmpresa" placeholder="Empresa">
-    <input id="cadEmpID" placeholder="ID da Empresa">
-    <button id="cadEmpBtn">Cadastrar-se</button>
-  </div>
+<div id="cadEmpresa" class="content">
+  <input placeholder="Nome">
+  <input placeholder="Telefone">
+  <input placeholder="Idade">
+  <select>
+    <option>Sexo</option>
+  </select>
+  <input placeholder="Função">
+  <input placeholder="Empresa">
+  <input placeholder="ID Empresa">
+  <button>Cadastrar</button>
+</div>
 
-  <div id="status"></div>
+<div id="agente" class="content">
+  <input id="agNome" placeholder="Nome Passageiro">
+  <input id="agDestino" placeholder="Destino">
+  <button onclick="solicitarViaAgente()">Solicitar Transporte</button>
 </div>
 
 <div id="map"></div>
+<div id="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-// ================== TABS ==================
-const tabs = document.querySelectorAll('.tab');
-const tabContents = document.querySelectorAll('.tab-content');
+
+// Tabs
+const tabs=document.querySelectorAll('.tab');
+const contents=document.querySelectorAll('.content');
 tabs.forEach(tab=>{
-  tab.addEventListener('click', ()=>{
-    tabs.forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
-    tabContents.forEach(c=>c.classList.remove('active'));
-    document.getElementById(tab.dataset.tab).classList.add('active');
-  });
+ tab.onclick=()=>{
+  tabs.forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  contents.forEach(c=>c.style.display=c.id===tab.dataset.target?'block':'none');
+ }
 });
 
-// ================== LOGIN ==================
-const loginType = document.getElementById('loginType');
-loginType.addEventListener('change', ()=>{
-  const tipo = loginType.value;
-  document.getElementById('loginFuncao').style.display = tipo==="empresa"?"block":"none";
-  document.getElementById('loginEmpresaId').style.display = tipo==="empresa"?"block":"none";
-});
-
-// ================== MAPA ==================
-const map = L.map('map').setView([-8.83,13.23],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-let userMarker = null;
-let vehicleMarkers = {};
-
-// ================== RASTREAMENTO EM TEMPO REAL ==================
-let ws = new WebSocket("ws://localhost:3000/ws"); // URL do seu servidor WS
-
-ws.onmessage = (msg)=>{
-  const data = JSON.parse(msg.data);
-  // Filtrar conforme usuário ou membro empresa
-  if(currentLogin){
-    if(currentLogin.type==="user"){
-      // usuário comum: pegar os 2 veículos mais próximos
-      data.vehicles.sort((a,b)=>{
-        const d1 = distance(userLat,userLng,a.lat,a.lng);
-        const d2 = distance(userLat,userLng,b.lat,b.lng);
-        return d1-d2;
-      });
-      showVehicles(data.vehicles.slice(0,2));
-    } else if(currentLogin.type==="empresa"){
-      // membro empresa: mostrar apenas veículos da empresa
-      const filtered = data.vehicles.filter(v=>v.empresa===currentLogin.empresa);
-      showVehicles(filtered);
-    }
-  }
+// Login
+const loginType=document.getElementById('loginType');
+loginType.onchange=()=>{
+ document.getElementById('loginFuncao').style.display=loginType.value==='empresa'?'block':'none';
+ document.getElementById('loginEmpresaId').style.display=loginType.value==='empresa'?'block':'none';
 };
 
-function showVehicles(vehicles){
-  vehicles.forEach(v=>{
-    if(!vehicleMarkers[v.id]){
-      vehicleMarkers[v.id] = L.marker([v.lat,v.lng]).addTo(map)
-        .bindPopup(`Veículo ${v.id} - ${v.empresa} - ${v.rota}`);
-    } else {
-      vehicleMarkers[v.id].setLatLng([v.lat,v.lng]);
-    }
-  });
+// USSD Simulação
+ussdBtn.onclick=()=>{
+ alert("USSD: *123#\n1.Ver rotas\n2.Pedir transporte");
+};
+
+// Agente
+function solicitarViaAgente(){
+ const nome=document.getElementById('agNome').value;
+ const destino=document.getElementById('agDestino').value;
+ alert("Pedido enviado via agente");
+ console.log(nome,destino);
 }
 
-function distance(lat1, lng1, lat2, lng2){
-  return Math.sqrt(Math.pow(lat1-lat2,2)+Math.pow(lng1-lng2,2));
-}
+// Mapa
+const map=L.map('map').setView([-8.8383,13.23],13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+let markers={};
 
-// ================== LOGIN LOCAL ==================
-let currentLogin = null;
-let userLat=0,userLng=0;
-document.getElementById('loginBtn').addEventListener('click', ()=>{
-  const tipo = loginType.value;
-  const nome = document.getElementById('loginName').value;
-  const telefone = document.getElementById('loginPhone').value;
-  if(!nome||!telefone){alert("Preencha os campos!"); return;}
-  currentLogin = {type:tipo,nome,telefone};
-  if(tipo==="empresa"){
-    const funcao = document.getElementById('loginFuncao').value;
-    const empresaID = document.getElementById('loginEmpresaId').value;
-    if(!funcao||!empresaID){alert("Preencha função e ID da empresa!"); return;}
-    currentLogin.funcao = funcao;
-    currentLogin.empresa = empresaID;
-  }
-  alert(`Login realizado como ${tipo}`);
-  // Iniciar rastreamento GPS do usuário
-  navigator.geolocation.watchPosition(pos=>{
-    userLat=pos.coords.latitude;
-    userLng=pos.coords.longitude;
-    if(!userMarker){
-      userMarker=L.marker([userLat,userLng]).addTo(map).bindPopup("Você");
-    } else {userMarker.setLatLng([userLat,userLng]);}
-    map.setView([userLat,userLng],16);
-  },()=>alert("Erro GPS"),{enableHighAccuracy:true});
-});
-
-// ================== CADASTRO ==================
-document.getElementById('cadUserBtn').addEventListener('click', ()=>{
-  const n=document.getElementById('cadName').value;
-  const t=document.getElementById('cadPhone').value;
-  const i=document.getElementById('cadIdade').value;
-  const s=document.getElementById('cadSexo').value;
-  if(!n||!t||!i||!s){alert("Preencha todos os campos!"); return;}
-  alert("Usuário cadastrado com sucesso!");
-});
-
-document.getElementById('cadEmpBtn').addEventListener('click', ()=>{
-  const n=document.getElementById('cadEmpName').value;
-  const t=document.getElementById('cadEmpPhone').value;
-  const i=document.getElementById('cadEmpIdade').value;
-  const s=document.getElementById('cadEmpSexo').value;
-  const f=document.getElementById('cadEmpFuncao').value;
-  const e=document.getElementById('cadEmpEmpresa').value;
-  const id=document.getElementById('cadEmpID').value;
-  if(!n||!t||!i||!s||!f||!e||!id){alert("Preencha todos os campos!"); return;}
-  alert("Membro da empresa cadastrado com sucesso!");
-});
-
-// ================== OFFLINE ==================
-function updateOnlineStatus(){
-  offline.style.display = navigator.onLine ? "none":"block";
-}
-window.addEventListener('online',updateOnlineStatus);
-window.addEventListener('offline',updateOnlineStatus);
-updateOnlineStatus();
+setInterval(()=>{
+ const vehicles=[
+  {id:1,lat:-8.83+Math.random()*0.01,lng:13.23+Math.random()*0.01},
+  {id:2,lat:-8.82+Math.random()*0.01,lng:13.22+Math.random()*0.01}
+ ];
+ vehicles.forEach(v=>{
+  if(!markers[v.id]) markers[v.id]=L.marker([v.lat,v.lng]).addTo(map);
+  else markers[v.id].setLatLng([v.lat,v.lng]);
+ });
+},2000);
 
 </script>
 </body>
