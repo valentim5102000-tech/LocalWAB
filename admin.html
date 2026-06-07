@@ -3,43 +3,191 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Usuário</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<title>LocalWab ADMIN MASTER</title>
+
 <style>
-body{margin:0;font-family:Arial;background:#f5f5f5;}
-header{background:#cc0000;color:white;padding:15px;text-align:center;}
+body{
+margin:0;
+font-family:Arial;
+background:#0f172a;
+color:white;
+}
+
+header{
+background:#020617;
+padding:15px;
+text-align:center;
+font-weight:bold;
+font-size:18px;
+}
+
 .container{padding:15px;}
-.card{background:white;padding:15px;border-radius:10px;margin-bottom:10px;}
-#map{height:50vh;border-radius:10px;}
-button{padding:10px;width:100%;background:#28a745;color:white;border:none;border-radius:5px;}
+
+.card{
+background:#1e293b;
+padding:15px;
+border-radius:12px;
+margin-bottom:12px;
+}
+
+.stat{
+font-size:18px;
+margin:5px 0;
+color:#22c55e;
+}
+
+.item{
+background:#334155;
+padding:10px;
+margin-top:8px;
+border-radius:8px;
+}
 </style>
+
 </head>
+
 <body>
-<header>📍 LocalWab</header>
+
+<header>🛡️ LOCALWAB PAINEL ADMIN REAL TIME</header>
+
 <div class="container">
 
+<!-- STATS -->
 <div class="card">
-<h3>🚐 Transportes próximos</h3>
-<div id="map"></div>
+<h3>📊 Estatísticas</h3>
+
+<div class="stat" id="users">👤 Usuários: ...</div>
+<div class="stat" id="drivers">🚖 Motoristas: ...</div>
+<div class="stat" id="rides">🚐 Viagens: ...</div>
+<div class="stat" id="pending">⏳ Pendentes: ...</div>
+<div class="stat" id="active">🔥 Ativas: ...</div>
+
 </div>
 
+<!-- USERS -->
 <div class="card">
-<h3>⏱️ Tempo estimado</h3>
-<p>5 - 10 minutos</p>
+<h3>👤 Usuários</h3>
+<div id="usersList"></div>
 </div>
 
+<!-- RIDES -->
 <div class="card">
-<button>Solicitar Transporte</button>
+<h3>🚐 Viagens</h3>
+<div id="ridesList"></div>
 </div>
 
 </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
-const map=L.map('map').setView([-8.8383,13.23],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-L.marker([-8.83,13.23]).addTo(map).bindPopup("Transporte próximo");
+const firebaseConfig = {
+apiKey:"AIzaSyDG44wGTJtdINCaVFCFxRJsninm-KwRTDI",
+authDomain:"localwabapp.firebaseapp.com",
+projectId:"localwabapp",
+storageBucket:"localwabapp.firebasestorage.app",
+messagingSenderId:"61456899292",
+appId:"1:61456899292:web:3f4dc071bcf74471ed2819"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+/* ================= STATS REAL TIME ================= */
+
+function loadStats(){
+
+db.collection("usuarios").onSnapshot(snap=>{
+document.getElementById("users").innerText="👤 Usuários: "+snap.size;
+});
+
+db.collection("viagens").onSnapshot(snap=>{
+
+let pendentes = 0;
+let ativas = 0;
+
+snap.forEach(doc=>{
+const v = doc.data();
+
+if(v.status === "pendente") pendentes++;
+if(v.status === "aceite" || v.status === "a_caminho") ativas++;
+});
+
+document.getElementById("rides").innerText="🚐 Viagens: "+snap.size;
+document.getElementById("pending").innerText="⏳ Pendentes: "+pendentes;
+document.getElementById("active").innerText="🔥 Ativas: "+ativas;
+
+});
+
+db.collection("veiculos").onSnapshot(snap=>{
+document.getElementById("drivers").innerText="🚖 Motoristas: "+snap.size;
+});
+
+}
+
+/* ================= USERS ================= */
+
+function loadUsers(){
+
+db.collection("usuarios")
+.onSnapshot(snap=>{
+
+document.getElementById("usersList").innerHTML="";
+
+snap.forEach(doc=>{
+
+const u = doc.data();
+
+document.getElementById("usersList").innerHTML += `
+<div class="item">
+📧 ${u.email || "sem email"}<br>
+👤 ${u.tipo || "user"}
+</div>
+`;
+
+});
+
+});
+
+}
+
+/* ================= RIDES ================= */
+
+function loadRides(){
+
+db.collection("viagens")
+.onSnapshot(snap=>{
+
+document.getElementById("ridesList").innerHTML="";
+
+snap.forEach(doc=>{
+
+const v = doc.data();
+
+document.getElementById("ridesList").innerHTML += `
+<div class="item">
+📍 ${v.origem} → ${v.destino}<br>
+📊 ${v.status}<br>
+👨‍✈️ ${v.motorista || "sem motorista"}
+</div>
+`;
+
+});
+
+});
+
+}
+
+/* START */
+loadStats();
+loadUsers();
+loadRides();
+
 </script>
+
 </body>
 </html>
