@@ -3,48 +3,178 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Empresa</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<title>LEXGUARD SIGNAL CENTER</title>
+
 <style>
-body{margin:0;font-family:Arial;background:#111827;color:white;}
-header{background:#1f2937;padding:15px;text-align:center;}
+body{
+margin:0;
+font-family:Arial;
+background:#0f172a;
+color:white;
+}
+
+header{
+background:#020617;
+padding:15px;
+text-align:center;
+font-weight:bold;
+font-size:18px;
+}
+
 .container{padding:15px;}
-.card{background:#374151;padding:15px;border-radius:10px;margin-bottom:10px;}
-#map{height:50vh;border-radius:10px;}
+
+.card{
+background:#1e293b;
+padding:15px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+.item{
+background:#334155;
+padding:10px;
+border-radius:8px;
+margin-top:8px;
+}
+
+.log{
+background:#0f172a;
+padding:10px;
+border-radius:8px;
+font-size:13px;
+white-space:pre-line;
+}
 </style>
+
 </head>
+
 <body>
-<header>🏢 Dashboard da Empresa</header>
+
+<header>📡 LEXGUARD SIGNAL CENTER (LIVE)</header>
+
 <div class="container">
 
 <div class="card">
-<h3>🚐 Meus Veículos</h3>
-<p>Total: 10</p>
+<h3>🚐 Motoristas Ativos</h3>
+<div id="veiculos">A carregar...</div>
 </div>
 
 <div class="card">
-<h3>💰 Receita do Dia</h3>
-<p>120.000 Kz</p>
+<h3>📦 Viagens ao Vivo</h3>
+<div id="viagens">A carregar...</div>
 </div>
 
 <div class="card">
-<h3>🗺️ Localização</h3>
-<div id="map"></div>
+<h3>🔥 Sinais do Sistema</h3>
+<div id="logs" class="log"></div>
 </div>
 
 </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
-const map=L.map('map').setView([-8.8383,13.23],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-const vehicles=[
- {lat:-8.83,lng:13.23},
- {lat:-8.82,lng:13.22}
-];
+firebase.initializeApp({
+apiKey:"AIzaSyDG44wGTJtdINCaVFCFxRJsninm-KwRTDI",
+projectId:"localwabapp"
+});
 
-vehicles.forEach(v=>L.marker([v.lat,v.lng]).addTo(map));
+const db = firebase.firestore();
+
+let logs = [];
+
+/* 🔥 LOG SYSTEM */
+function addLog(msg){
+
+logs.unshift("[" + new Date().toLocaleTimeString() + "] " + msg);
+
+if(logs.length > 15) logs.pop();
+
+document.getElementById("logs").innerText = logs.join("\n");
+}
+
+/* 🚐 MOTORISTAS AO VIVO */
+db.collection("veiculos")
+.onSnapshot(snap=>{
+
+let html = "";
+
+snap.forEach(doc=>{
+
+const v = doc.data();
+
+html += `
+<div class="item">
+🚐 ${v.nomeVeiculo || "Sem nome"}<br>
+👨‍✈️ ${v.motorista || "Sem motorista"}<br>
+📍 Rota: ${v.rota || "Sem rota"}<br>
+🟢 Status: ${v.status || "offline"}<br>
+📌 GPS: ${v.lat || "--"} , ${v.lng || "--"}
+</div>
+`;
+
+});
+
+document.getElementById("veiculos").innerHTML = html;
+
+});
+
+/* 📦 VIAGENS + SINAIS */
+db.collection("viagens")
+.onSnapshot(snap=>{
+
+let html = "";
+
+snap.docChanges().forEach(change=>{
+
+const v = change.doc.data();
+
+/* 🔥 SINAIS AO VIVO */
+if(change.type === "added"){
+addLog("📥 Nova viagem criada por " + v.userId);
+}
+
+if(change.type === "modified"){
+
+if(v.status === "aceite"){
+addLog("🚐 Motorista ACEITOU viagem de " + v.userId);
+}
+
+if(v.status === "a_caminho"){
+addLog("🚖 Motorista está a caminho");
+}
+
+if(v.status === "em_viagem"){
+addLog("🚀 Viagem iniciada");
+}
+
+if(v.status === "concluida"){
+addLog("🏁 Viagem finalizada");
+}
+
+}
+
+/* LISTA */
+html += `
+<div class="item">
+👤 User: ${v.userId}<br>
+🚐 ${v.origem} → ${v.destino}<br>
+📊 Status: ${v.status}<br>
+🚐 Veículo: ${v.veiculoAtribuido || "sem atribuição"}<br>
+👨‍✈️ Motorista: ${v.motoristaId || "aguardando"}
+</div>
+`;
+
+});
+
+document.getElementById("viagens").innerHTML = html;
+
+});
+
 </script>
+
 </body>
 </html>
