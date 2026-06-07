@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LocalWab Motorista</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:white;}
+header{background:#020617;padding:15px;text-align:center;font-weight:bold;}
+.container{padding:15px;}
+.card{background:#1e293b;padding:15px;border-radius:12px;margin-bottom:12px;}
+button{width:100%;padding:10px;border:none;border-radius:8px;margin-top:8px;font-weight:bold;cursor:pointer;}
+.accept{background:#16a34a;color:white;}
+.start{background:#f59e0b;}
+.finish{background:#ef4444;color:white;}
+.ride{background:#334155;padding:10px;border-radius:10px;margin-top:8px;}
+</style>
+</head>
+
+<body>
+
+<header>🚖 LOCALWAB BEM-VINDO MOTORISTA</header>
+
+<div class="container">
+
+<div class="card">
+<h3>📍 Viagens disponíveis</h3>
+<div id="rides">A carregar...</div>
+</div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+apiKey:"AIzaSyDG44wGTJtdINCaVFCFxRJsninm-KwRTDI",
+authDomain:"localwabapp.firebaseapp.com",
+projectId:"localwabapp",
+storageBucket:"localwabapp.firebasestorage.app",
+messagingSenderId:"61456899292",
+appId:"1:61456899292:web:3f4dc071bcf74471ed2819"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+/* MOTORISTA DEMO */
+const motoristaNome = "Motorista 1";
+
+/* ================= LISTAR VIAGENS ================= */
+
+function loadRides(){
+
+db.collection("viagens")
+.where("status","==","pendente")
+.onSnapshot(snap=>{
+
+document.getElementById("rides").innerHTML="";
+
+snap.forEach(doc=>{
+
+const v = doc.data();
+
+document.getElementById("rides").innerHTML += `
+<div class="ride">
+🚐 ${v.origem} → ${v.destino}
+
+<button class="accept" onclick="acceptRide('${doc.id}')">
+ACEITAR
+</button>
+</div>
+`;
+
+});
+
+});
+
+}
+
+/* ================= ACEITAR ================= */
+
+async function acceptRide(id){
+
+await db.collection("viagens").doc(id).update({
+status:"aceite",
+motoristaId: motoristaNome,
+motorista: motoristaNome
+});
+
+alert("Viagem aceite!");
+}
+
+/* ================= INICIAR ================= */
+
+async function startRide(id){
+
+await db.collection("viagens").doc(id).update({
+status:"a_caminho"
+});
+
+}
+
+/* ================= FINALIZAR ================= */
+
+async function finishRide(id){
+
+await db.collection("viagens").doc(id).update({
+status:"concluida"
+});
+
+}
+
+/* START */
+loadRides();
+
+</script>
+
+</body>
+</html>
