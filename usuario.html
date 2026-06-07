@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LEXGUARD USER UBER FINAL</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:white;}
+header{background:#020617;padding:15px;text-align:center;font-weight:bold;}
+.container{padding:15px;}
+.card{background:#1e293b;padding:15px;border-radius:10px;margin-bottom:10px;}
+input,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none;}
+button{background:#16a34a;color:white;font-weight:bold;cursor:pointer;}
+#map{height:300px;border-radius:10px;margin-top:10px;}
+</style>
+
+</head>
+
+<body>
+
+<header>🟢 LEXGUARD USER UBER FINAL</header>
+
+<div class="container">
+
+<div class="card">
+<h3>📍 GPS</h3>
+<p>Lat: <span id="lat">--</span></p>
+<p>Lng: <span id="lng">--</span></p>
+<p id="gpsStatus">A iniciar...</p>
+</div>
+
+<div class="card">
+<h3>🚐 Pedir Viagem</h3>
+<input id="origem" placeholder="Origem">
+<input id="destino" placeholder="Destino">
+<button onclick="pedirViagem()">Pedir Viagem</button>
+<p id="statusBtn"></p>
+</div>
+
+<div class="card">
+<h3>📊 Status</h3>
+<div id="statusViagem">Nenhuma viagem ativa</div>
+</div>
+
+<div id="map"></div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+apiKey:"AIzaSyDG44wGTJtdINCaVFCFxRJsninm-KwRTDI",
+authDomain:"localwabapp.firebaseapp.com",
+projectId:"localwabapp",
+storageBucket:"localwabapp.firebasestorage.app",
+messagingSenderId:"61456899292",
+appId:"1:61456899292:web:3f4dc071bcf74471ed2819"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+let currentUser = null;
+let userLat = null;
+let userLng = null;
+
+/* 🔐 AUTH FIXADO */
+firebase.auth().onAuthStateChanged(user=>{
+currentUser = user;
+});
+
+/* 📍 GPS */
+function startGPS(){
+
+navigator.geolocation.watchPosition(pos=>{
+
+userLat = pos.coords.latitude;
+userLng = pos.coords.longitude;
+
+document.getElementById("lat").innerText = userLat;
+document.getElementById("lng").innerText = userLng;
+document.getElementById("gpsStatus").innerText = "GPS ativo";
+
+});
+
+}
+
+/* 🚐 PEDIR VIAGEM (FIX TOTAL UBER) */
+async function pedirViagem(){
+
+if(!currentUser){
+alert("Faz login primeiro");
+return;
+}
+
+const origem = document.getElementById("origem").value;
+const destino = document.getElementById("destino").value;
+
+if(!origem || !destino){
+alert("Preenche origem e destino");
+return;
+}
+
+/* 🔥 BUSCA MOTORISTA ONLINE MAIS SIMPLES (BASE) */
+const snap = await db.collection("veiculos")
+.where("status","==","online")
+.limit(1)
+.get();
+
+let veiculoId = null;
+
+snap.forEach(doc=>{
+veiculoId = doc.id;
+});
+
+await db.collection("viagens").add({
+userId: currentUser.uid,
+origem,
+destino,
+status:"pendente",
+veiculoAtribuido: veiculoId || null,
+lat:userLat,
+lng:userLng,
+createdAt:Date.now()
+});
+
+document.getElementById("statusBtn").innerText="Viagem enviada 🚐";
+
+trackViagem();
+
+}
+
+/* 📊 TRACK UBER STYLE */
+function trackViagem(){
+
+if(!currentUser) return;
+
+db.collection("viagens")
+.where("userId","==",currentUser.uid)
+.onSnapshot(snap=>{
+
+snap.forEach(doc=>{
+
+const v = doc.data();
+
+document.getElementById("statusViagem").innerHTML =
+"📍 Status: "+v.status+
+"<br>🚐 Motorista: "+(v.motoristaId || "aguardando")+
+"<br>🚐 Veículo: "+(v.veiculoAtribuido || "sem atribuição");
+
+});
+
+});
+
+}
+
+/* START */
+startGPS();
+
+</script>
+
+</body>
+</html>
